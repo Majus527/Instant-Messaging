@@ -47,23 +47,14 @@ func (this *Server)Start() {
 
 	// 监听
 	for {
-    conn, err := listener.Accept()
-    if err != nil {
-        fmt.Println(err)
-        continue
-    }
-    go this.handleConn(conn)	// 使用goroutine并发处理连接
+    	conn, err := listener.Accept()
+    	if err != nil {
+    	    fmt.Println(err)
+    	    continue
+    	}
+    	go this.handleConn(conn)	// 使用goroutine并发处理连接
 	}
 }
-
-// 用户上线提示
-func (this *Server)userConn(user *User){
-	for _, touser := range this.OnlineMap {
-		touser.conn.Write([]byte(user.Name + " is online\n"))
-		fmt.Printf("user %s is online\n", touser.Name)
-	}
-}
-
 
 // 监听消息队列
 func (this *Server) ListenMessager() {
@@ -80,7 +71,7 @@ func (this *Server) ListenMessager() {
 
 
 // 广播消息
-func (this *Server)broadcast(user *User, msg string){
+func (this *Server)Broadcast(user *User, msg string){
 	sendMsg := user.Name + ":" + msg
 	this.Message <- sendMsg
 }
@@ -90,29 +81,29 @@ func (this *Server)handleConn(conn net.Conn) {
 	defer conn.Close()
 	buffer := make([]byte, 1024)	// 创建一个缓冲区
 	// 创建user
-	user := NewUser(conn)
+	user := NewUser(conn, this)
 
 	// 将user添加到在线用户列表中
 	this.OnlineMap[user.Name] = user
 
 	// 用户上线
-	this.userConn(user)
+	user.Online()
 
 	for {
-			// 接收
-			n, err := conn.Read(buffer)
-			if err != nil {
-					if err != io.EOF {
-							fmt.Println("Read error:", err)
-					}
-					break
+		// 接收
+		n, err := conn.Read(buffer)
+		if err != nil {
+			if err != io.EOF {
+					fmt.Println("Read error:", err)
 			}
-			fmt.Printf("%s: %s",user.Name, string(buffer[:n]))
-			msg := string(buffer[:n])
+			break
+		}
+		// fmt.Printf("%s: %s",user.Name, string(buffer[:n]))
+		msg := string(buffer[:n])
 
-			// 发送
-			// 广播消息
-			this.broadcast(user, msg)
-			// conn.Write([]byte("----------Received your message------------\n"))
+		// 发送
+		// 广播消息
+		this.Broadcast(user, msg)
+		// conn.Write([]byte("----------Received your message------------\n"))
 	}
 }

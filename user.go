@@ -11,10 +11,11 @@ type User struct {
 	Addr string
 	C chan string
 	conn net.Conn
+	server *Server
 }
 
 
-func NewUser(conn net.Conn) *User {
+func NewUser(conn net.Conn, server *Server) *User {
 	// 获取远程地址
 	remoteAddr := conn.RemoteAddr().String()
 
@@ -35,6 +36,7 @@ func NewUser(conn net.Conn) *User {
 		Name: name,
 		Addr: remoteAddr,
 		conn: conn,
+		server: server,
 	}
 
 	return user
@@ -42,7 +44,8 @@ func NewUser(conn net.Conn) *User {
 
 // 用户上线业务
 func (this *User) Online() {
-	
+	// 广播上线信息
+	this.server.Message <- "[" + this.Addr + "]" + this.Name + " is online\n"
 }
 
 //用户下线业务
